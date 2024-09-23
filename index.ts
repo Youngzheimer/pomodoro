@@ -10,6 +10,7 @@ interface SpotifyConfig {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
+  port: number;
 }
 
 const config: SpotifyConfig = JSON.parse(
@@ -17,7 +18,7 @@ const config: SpotifyConfig = JSON.parse(
 );
 
 const app = express();
-const port = 3000;
+const port = config.port;
 
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.static(path.join(__dirname, "client", "build")));
