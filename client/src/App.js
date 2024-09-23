@@ -12,6 +12,7 @@ const PomodoroTimer = () => {
   const [accentColor, setAccentColor] = useState("#121212");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const timerRef = useRef(null);
+  const gradientRef = useRef(null);
 
   const { data: dominantColor } = useColor(currentTrack?.albumCover, "hex", {
     crossOrigin: "anonymous",
@@ -50,7 +51,9 @@ const PomodoroTimer = () => {
   useEffect(() => {
     const fetchCurrentTrack = async () => {
       try {
-        const response = await fetch("/api/current-track");
+        const response = await fetch("/api/current-track", {
+          credentials: "include",
+        });
         if (response.status === 401) {
           setIsAuthenticated(false);
           return;
@@ -70,6 +73,16 @@ const PomodoroTimer = () => {
     const interval = setInterval(fetchCurrentTrack, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (gradientRef.current) {
+      gradientRef.current.style.opacity = 0;
+      setTimeout(() => {
+        gradientRef.current.style.backgroundImage = `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`;
+        gradientRef.current.style.opacity = 1;
+      }, 500);
+    }
+  }, [accentColor]);
 
   const handleLogin = () => {
     window.location.href = "/api/login";
@@ -116,22 +129,34 @@ const PomodoroTimer = () => {
     alignItems: "center",
     justifyContent: "center",
     height: "100vh",
-    background: isBreak
-      ? accentColor
-      : `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`,
+    background: isBreak ? accentColor : "#000",
     color: textColor,
-    backgroundSize: "200% 200%",
+    position: "relative",
+    overflow: "hidden",
+  };
+
+  const gradientStyle = {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`,
+    opacity: 1,
+    transition: "opacity 0.5s ease",
   };
 
   const timerStyle = {
     fontSize: "8rem",
     marginBottom: "2rem",
     fontWeight: "bold",
+    zIndex: 1,
   };
 
   const buttonContainerStyle = {
     display: "flex",
     gap: "1rem",
+    zIndex: 1,
   };
 
   const buttonStyle = {
@@ -154,6 +179,7 @@ const PomodoroTimer = () => {
     position: "absolute",
     bottom: "50px",
     transition: "opacity 0.5s ease",
+    zIndex: 1,
   };
 
   const albumCoverStyle = {
@@ -177,6 +203,27 @@ const PomodoroTimer = () => {
     top: "20px",
     fontSize: "1.2rem",
     color: textColor,
+    zIndex: 1,
+  };
+
+  const loginButtonStyle = {
+    display: "flex",
+    alignItems: "center",
+    backgroundColor: "#1DB954",
+    color: "#FFFFFF",
+    border: "none",
+    borderRadius: "24px",
+    padding: "12px 24px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "background-color 0.3s ease",
+  };
+
+  const spotifyLogoStyle = {
+    width: "24px",
+    height: "24px",
+    marginRight: "12px",
   };
 
   const [currentTime, setCurrentTime] = useState("");
@@ -194,8 +241,14 @@ const PomodoroTimer = () => {
 
   return (
     <div ref={timerRef} style={containerStyle}>
+      <div ref={gradientRef} style={gradientStyle}></div>
       {!isAuthenticated ? (
-        <button onClick={handleLogin} style={buttonStyle}>
+        <button onClick={handleLogin} style={loginButtonStyle}>
+          <img
+            src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_White.png"
+            alt="Spotify Logo"
+            style={spotifyLogoStyle}
+          />
           Login with Spotify
         </button>
       ) : (

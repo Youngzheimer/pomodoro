@@ -4,6 +4,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import querystring from "querystring";
+import session from "express-session";
 
 interface SpotifyConfig {
   clientId: string;
@@ -18,11 +19,23 @@ const config: SpotifyConfig = JSON.parse(
 const app = express();
 const port = 3000;
 
-app.use(cors());
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.static(path.join(__dirname, "client", "build")));
+app.use(
+  session({
+    secret: "your_session_secret",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === "production" },
+  })
+);
 
-let accessToken: string | null = null;
-let refreshToken: string | null = null;
+declare module "express-session" {
+  interface SessionData {
+    accessToken: string;
+    refreshToken: string;
+  }
+}
 
 const spotifyApi = axios.create({
   baseURL: "https://api.spotify.com/v1",
@@ -64,8 +77,8 @@ app.get("/api/callback", async (req, res) => {
       }
     );
 
-    accessToken = response.data.access_token;
-    refreshToken = response.data.refresh_token;
+    req.session.accessToken = response.data.access_token;
+    req.session.refreshToken = response.data.refresh_token;
 
     res.redirect("/");
   } catch (error) {
@@ -74,7 +87,7 @@ app.get("/api/callback", async (req, res) => {
   }
 });
 
-async function refreshAccessToken() {
+async function refreshAccessToken(refreshToken: string): Promise<string> {
   try {
     const response = await axios.post(
       "https://accounts.spotify.com/api/token",
@@ -94,23 +107,21 @@ async function refreshAccessToken() {
       }
     );
 
-    accessToken = response.data.access_token;
-    if (response.data.refresh_token) {
-      refreshToken = response.data.refresh_token;
-    }
+    return response.data.access_token;
   } catch (error) {
     console.error("Error refreshing access token:", error);
+    throw error;
   }
 }
 
 app.get("/api/current-track", async (req, res) => {
-  if (!accessToken) {
+  if (!req.session.accessToken) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
   try {
     const response = await spotifyApi.get("/me/player/currently-playing", {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${req.session.accessToken}` },
     });
 
     if (response.status === 204) {
@@ -126,10 +137,17 @@ app.get("/api/current-track", async (req, res) => {
     }
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      await refreshAccessToken();
-      return res
-        .status(401)
-        .json({ error: "Token refreshed, please try again" });
+      try {
+        const newAccessToken = await refreshAccessToken(
+          req.session.refreshToken as string
+        );
+        req.session.accessToken = newAccessToken;
+        return res
+          .status(401)
+          .json({ error: "Token refreshed, please try again" });
+      } catch (refreshError) {
+        return res.status(401).json({ error: "Authentication failed" });
+      }
     }
     console.error("Error fetching current track:", error);
     res.status(500).json({ error: "Failed to fetch current track" });
