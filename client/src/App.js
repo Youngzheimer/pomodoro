@@ -3,21 +3,25 @@ import { Play, Pause, RotateCcw, Maximize, Minimize } from "lucide-react";
 import { useColor } from "color-thief-react";
 
 const PomodoroTimer = () => {
-  const [minutes, setMinutes] = useState(25);
-  const [seconds, setSeconds] = useState(0);
-  const [isActive, setIsActive] = useState(false);
-  const [isBreak, setIsBreak] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState(null);
-  const [accentColor, setAccentColor] = useState("#121212");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const timerRef = useRef(null);
-  const gradientRef = useRef(null);
+  // 상태 변수 초기화
+  const [minutes, setMinutes] = useState(25); // 분
+  const [seconds, setSeconds] = useState(0); // 초
+  const [isActive, setIsActive] = useState(false); // 타이머 활성화 상태
+  const [isBreak, setIsBreak] = useState(false); // 휴식 상태
+  const [isFullscreen, setIsFullscreen] = useState(false); // 전체 화면 상태
+  const [currentTrack, setCurrentTrack] = useState(null); // 현재 트랙
+  const [accentColor, setAccentColor] = useState("#121212"); // 강조 색상
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // 인증 상태
+  const timerRef = useRef(null); // 타이머 참조
+  const gradientRef = useRef(null); // 그라디언트 참조
+  const backgroundRef = useRef(null); // 배경 참조
 
+  // 현재 트랙의 앨범 커버에서 주요 색상 가져오기
   const { data: dominantColor } = useColor(currentTrack?.albumCover, "hex", {
     crossOrigin: "anonymous",
   });
 
+  // 주요 색상이 변경될 때 강조 색상 업데이트
   useEffect(() => {
     if (dominantColor) {
       setAccentColor(dominantColor);
@@ -26,6 +30,7 @@ const PomodoroTimer = () => {
     }
   }, [dominantColor, currentTrack]);
 
+  // 타이머 로직
   useEffect(() => {
     let interval = null;
     if (isActive) {
@@ -48,6 +53,7 @@ const PomodoroTimer = () => {
     return () => clearInterval(interval);
   }, [isActive, minutes, seconds, isBreak]);
 
+  // 현재 트랙 정보 가져오기
   useEffect(() => {
     const fetchCurrentTrack = async () => {
       try {
@@ -74,24 +80,29 @@ const PomodoroTimer = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // 강조 색상에 따라 그라디언트 스타일 업데이트
   useEffect(() => {
-    if (gradientRef.current) {
-      gradientRef.current.style.opacity = 0;
+    if (gradientRef.current && backgroundRef.current) {
+      gradientRef.current.style.backgroundImage = `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`;
+      gradientRef.current.style.opacity = 1;
       setTimeout(() => {
-        gradientRef.current.style.backgroundImage = `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`;
-        gradientRef.current.style.opacity = 1;
+        backgroundRef.current.style.backgroundImage = `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`;
+        gradientRef.current.style.opacity = 0;
       }, 500);
     }
   }, [accentColor]);
 
+  // 로그인 핸들러
   const handleLogin = () => {
     window.location.href = "/api/login";
   };
 
+  // 타이머 토글 핸들러
   const toggleTimer = () => {
     setIsActive(!isActive);
   };
 
+  // 타이머 리셋 핸들러
   const resetTimer = () => {
     setIsActive(false);
     setMinutes(25);
@@ -99,6 +110,7 @@ const PomodoroTimer = () => {
     setIsBreak(false);
   };
 
+  // 전체 화면 토글 핸들러
   const toggleFullscreen = () => {
     if (!isFullscreen) {
       if (timerRef.current.requestFullscreen) {
@@ -112,6 +124,7 @@ const PomodoroTimer = () => {
     setIsFullscreen(!isFullscreen);
   };
 
+  // 대비 색상 계산 함수
   const getContrastColor = (hexcolor) => {
     if (!hexcolor) return "#ffffff";
     const r = parseInt(hexcolor.substr(1, 2), 16);
@@ -121,27 +134,40 @@ const PomodoroTimer = () => {
     return yiq >= 128 ? "#000000" : "#ffffff";
   };
 
-  const textColor = isBreak ? getContrastColor(accentColor) : "#ffffff";
+  const textColor = isBreak ? getContrastColor(accentColor) : "#ffffff"; // 텍스트 색상 결정
 
+  // 스타일 객체 정의
   const containerStyle = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     height: "100vh",
-    background: isBreak ? accentColor : "#000",
+    background: isBreak ? accentColor : `#000`,
     color: textColor,
     position: "relative",
     overflow: "hidden",
   };
 
-  const gradientStyle = {
+  const backgroundStyle = {
+    display: isAuthenticated ? "block" : "none",
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundImage: `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`,
+    backgroundImage: ``,
+    opacity: 1,
+  };
+
+  const gradientStyle = {
+    display: isAuthenticated ? "block" : "none",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: ``,
     opacity: 1,
     transition: "opacity 0.5s ease",
   };
@@ -226,7 +252,7 @@ const PomodoroTimer = () => {
     marginRight: "12px",
   };
 
-  const [currentTime, setCurrentTime] = useState("");
+  const [currentTime, setCurrentTime] = useState(""); // 현재 시간 상태
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
@@ -235,12 +261,13 @@ const PomodoroTimer = () => {
       setCurrentTime(`${hours}:${minutes}`);
     };
     updateClock();
-    const intervalId = setInterval(updateClock, 1000);
+    const intervalId = setInterval(updateClock, 1000); // 매초 현재 시간 업데이트
     return () => clearInterval(intervalId);
   }, []);
 
   return (
     <div ref={timerRef} style={containerStyle}>
+      <div ref={backgroundRef} style={backgroundStyle}></div>
       <div ref={gradientRef} style={gradientStyle}></div>
       {!isAuthenticated ? (
         <button onClick={handleLogin} style={loginButtonStyle}>
