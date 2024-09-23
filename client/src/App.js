@@ -66,6 +66,7 @@ const PomodoroTimer = () => {
         }
         const data = await response.json();
         if (data.isPlaying) {
+          console.log(data);
           setCurrentTrack(data);
         } else {
           setCurrentTrack(null);
@@ -134,7 +135,7 @@ const PomodoroTimer = () => {
     return yiq >= 128 ? "#000000" : "#ffffff";
   };
 
-  const textColor = isBreak ? getContrastColor(accentColor) : "#ffffff"; // 텍스트 색상 결정
+  const textColor = "#ffffff"; // 텍스트 색상 결정
 
   // 스타일 객체 정의
   const containerStyle = {
@@ -143,7 +144,6 @@ const PomodoroTimer = () => {
     alignItems: "center",
     justifyContent: "center",
     height: "100vh",
-    background: isBreak ? accentColor : `#000`,
     color: textColor,
     position: "relative",
     overflow: "hidden",
@@ -187,7 +187,7 @@ const PomodoroTimer = () => {
 
   const buttonStyle = {
     backgroundColor: textColor,
-    color: isBreak ? accentColor : "#121212",
+    color: "#121212",
     border: "none",
     borderRadius: "50%",
     width: "50px",
@@ -212,7 +212,7 @@ const PomodoroTimer = () => {
     width: "150px",
     height: "150px",
     objectFit: "cover",
-    borderRadius: "10px",
+    borderRadius: "4px",
     marginRight: "1rem",
     boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.3)",
   };
@@ -252,6 +252,13 @@ const PomodoroTimer = () => {
     marginRight: "12px",
   };
 
+  const spotifyLogoTextStyle = {
+    height: "24px",
+    marginBottom: "12px",
+    marginTop: "4px",
+    cursor: "pointer",
+  };
+
   const [currentTime, setCurrentTime] = useState(""); // 현재 시간 상태
   useEffect(() => {
     const updateClock = () => {
@@ -272,9 +279,10 @@ const PomodoroTimer = () => {
       {!isAuthenticated ? (
         <button onClick={handleLogin} style={loginButtonStyle}>
           <img
-            src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_White.png"
+            src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Primary_Logo_RGB_White.png"
             alt="Spotify Logo"
             style={spotifyLogoStyle}
+            onClick={handleLogin}
           />
           Login with Spotify
         </button>
@@ -304,10 +312,33 @@ const PomodoroTimer = () => {
                 style={albumCoverStyle}
               />
               <div style={trackTextStyle}>
-                <h2 style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>
+                <a href={currentTrack.link} target="_blank">
+                  <img
+                    src="https://storage.googleapis.com/pr-newsroom-wp/1/2023/05/Spotify_Full_Logo_RGB_White.png"
+                    alt="Spotify Link"
+                    style={spotifyLogoTextStyle}
+                    onClick={() => {
+                      window.open(currentTrack.link, "_blank");
+                      console.log(currentTrack.link);
+                    }}
+                  />
+                </a>
+                <h2
+                  style={{
+                    fontSize: "1.5rem",
+                    marginBottom: "0.5rem",
+                    marginTop: "0",
+                  }}
+                >
                   {currentTrack.title}
                 </h2>
-                <p style={{ fontSize: "1rem", opacity: 0.8 }}>
+                <p
+                  style={{
+                    fontSize: "1rem",
+                    opacity: 0.8,
+                    marginTop: "0",
+                  }}
+                >
                   {currentTrack.artist}
                 </p>
               </div>

@@ -134,6 +134,7 @@ app.get("/api/current-track", async (req, res) => {
         albumCover: track.album.images[0].url,
         title: track.name,
         artist: track.artists.map((artist: any) => artist.name).join(", "),
+        link: track.external_urls.spotify,
       });
     }
   } catch (error) {
