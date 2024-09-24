@@ -11,6 +11,7 @@ interface SpotifyConfig {
   clientSecret: string;
   redirectUri: string;
   port: number;
+  secret: string;
 }
 
 const config: SpotifyConfig = JSON.parse(
@@ -24,7 +25,7 @@ app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.static(path.join(__dirname, "client", "build")));
 app.use(
   session({
-    secret: "your_session_secret",
+    secret: config.secret,
     resave: false,
     saveUninitialized: true,
     cookie: { secure: process.env.NODE_ENV === "production" },
