@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Pause, RotateCcw, Maximize, Minimize } from "lucide-react";
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Maximize,
+  Minimize,
+  Settings,
+  X,
+} from "lucide-react";
 import { useColor } from "color-thief-react";
+import Cookies from "js-cookie";
 
 const PomodoroTimer = () => {
   // 상태 변수 초기화
@@ -12,9 +21,29 @@ const PomodoroTimer = () => {
   const [currentTrack, setCurrentTrack] = useState(null); // 현재 트랙
   const [accentColor, setAccentColor] = useState("#000"); // 강조 색상
   const [isAuthenticated, setIsAuthenticated] = useState(false); // 인증 상태
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [focusTime, setFocusTime] = useState(25);
+  const [breakTime, setBreakTime] = useState(5);
   const timerRef = useRef(null); // 타이머 참조
   const gradientRef = useRef(null); // 그라디언트 참조
   const backgroundRef = useRef(null); // 배경 참조
+
+  // 쿠키에서 설정 불러오기
+  useEffect(() => {
+    const savedFocusTime = Cookies.get("focusTime");
+    const savedBreakTime = Cookies.get("breakTime");
+    if (savedFocusTime) setFocusTime(parseInt(savedFocusTime));
+    if (savedBreakTime) setBreakTime(parseInt(savedBreakTime));
+  }, []);
+
+  // 설정 저장 함수
+  const saveSettings = () => {
+    Cookies.set("focusTime", focusTime.toString(), { expires: 365 });
+    Cookies.set("breakTime", breakTime.toString(), { expires: 365 });
+    setMinutes(focusTime);
+    setSeconds(0);
+    setIsSettingsOpen(false);
+  };
 
   function hexToRgb(hex) {
     // hex 컬러를 RGB로 변환
@@ -159,6 +188,11 @@ const PomodoroTimer = () => {
   // 로그인 핸들러
   const handleLogin = () => {
     window.location.href = "/api/login";
+  };
+
+  // 설정 버튼 핸들러
+  const toggleSettings = () => {
+    setIsSettingsOpen(!isSettingsOpen);
   };
 
   // 타이머 토글 핸들러
@@ -337,6 +371,81 @@ const PomodoroTimer = () => {
     width: "100%",
   };
 
+  const overlayStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+    opacity: isSettingsOpen ? 1 : 0,
+    visibility: isSettingsOpen ? "visible" : "hidden",
+    transition: "opacity 0.3s ease, visibility 0.3s ease",
+  };
+
+  const modalStyle = {
+    backgroundColor: isBreak ? accentColor : "#000",
+    color: textColor,
+    padding: "2rem",
+    borderRadius: "15px",
+    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    maxWidth: "400px",
+    width: "90%",
+    transform: isSettingsOpen ? "scale(1)" : "scale(0.9)",
+    opacity: isSettingsOpen ? 1 : 0,
+    transition: "transform 0.3s ease, opacity 0.3s ease",
+  };
+
+  const inputContainerStyle = {
+    display: "flex",
+    flexDirection: "column",
+    width: "100%",
+    marginBottom: "1rem",
+  };
+
+  const labelStyle = {
+    marginBottom: "0.5rem",
+    fontSize: "1rem",
+    fontWeight: "bold",
+  };
+
+  const inputStyle = {
+    marginBottom: "1rem",
+    padding: "0.75rem",
+    borderRadius: "8px",
+    border: "none",
+    fontSize: "1rem",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    color: textColor,
+  };
+
+  const saveButtonStyle = {
+    ...buttonStyle,
+    width: "100%",
+    height: "auto",
+    padding: "0.75rem 1rem",
+    borderRadius: "8px",
+    fontSize: "1rem",
+    fontWeight: "bold",
+    marginTop: "1rem",
+  };
+
+  const closeButtonStyle = {
+    position: "absolute",
+    top: "1rem",
+    right: "1rem",
+    background: "none",
+    border: "none",
+    color: textColor,
+    cursor: "pointer",
+  };
   const [currentTime, setCurrentTime] = useState(""); // 현재 시간 상태
   useEffect(() => {
     const updateClock = () => {
@@ -377,6 +486,9 @@ const PomodoroTimer = () => {
             </button>
             <button onClick={resetTimer} style={buttonStyle}>
               <RotateCcw size={24} />
+            </button>
+            <button onClick={toggleSettings} style={buttonStyle}>
+              <Settings size={24} />
             </button>
             <button onClick={toggleFullscreen} style={buttonStyle}>
               {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
@@ -421,6 +533,40 @@ const PomodoroTimer = () => {
                 >
                   {currentTrack.artist}
                 </p>
+              </div>
+              <div style={overlayStyle}>
+                <div style={modalStyle}>
+                  <button
+                    onClick={() => setIsSettingsOpen(false)}
+                    style={closeButtonStyle}
+                  >
+                    <X size={24} />
+                  </button>
+                  <h2 style={{ marginBottom: "1.5rem", fontSize: "1.5rem" }}>
+                    Settings
+                  </h2>
+                  <div style={inputContainerStyle}>
+                    <label style={labelStyle}>Focus Time (minutes):</label>
+                    <input
+                      type="number"
+                      value={focusTime}
+                      onChange={(e) => setFocusTime(parseInt(e.target.value))}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div style={inputContainerStyle}>
+                    <label style={labelStyle}>Break Time (minutes):</label>
+                    <input
+                      type="number"
+                      value={breakTime}
+                      onChange={(e) => setBreakTime(parseInt(e.target.value))}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <button onClick={saveSettings} style={saveButtonStyle}>
+                    Save Settings
+                  </button>
+                </div>
               </div>
             </div>
           )}
