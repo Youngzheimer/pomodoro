@@ -10,11 +10,43 @@ const PomodoroTimer = () => {
   const [isBreak, setIsBreak] = useState(false); // 휴식 상태
   const [isFullscreen, setIsFullscreen] = useState(false); // 전체 화면 상태
   const [currentTrack, setCurrentTrack] = useState(null); // 현재 트랙
-  const [accentColor, setAccentColor] = useState("#121212"); // 강조 색상
+  const [accentColor, setAccentColor] = useState("#000"); // 강조 색상
   const [isAuthenticated, setIsAuthenticated] = useState(false); // 인증 상태
   const timerRef = useRef(null); // 타이머 참조
   const gradientRef = useRef(null); // 그라디언트 참조
   const backgroundRef = useRef(null); // 배경 참조
+
+  function hexToRgb(hex) {
+    // hex 컬러를 RGB로 변환
+    const parsedHex = hex.replace("#", "");
+    const r = parseInt(parsedHex.substring(0, 2), 16) / 255;
+    const g = parseInt(parsedHex.substring(2, 4), 16) / 255;
+    const b = parseInt(parsedHex.substring(4, 6), 16) / 255;
+    return { r, g, b };
+  }
+
+  function rgbToHex(r, g, b) {
+    // RGB를 hex로 변환
+    const toHex = (value) => {
+      const hex = Math.round(value * 255)
+        .toString(16)
+        .padStart(2, "0");
+      return hex;
+    };
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+  function adjustBrightness(hex) {
+    const { r, g, b } = hexToRgb(hex);
+    const maxChannel = Math.max(r, g, b);
+
+    if (maxChannel > 0.5) {
+      const ratio = 0.5 / maxChannel;
+      return rgbToHex(r * ratio, g * ratio, b * ratio);
+    }
+
+    return hex;
+  }
 
   // 현재 트랙의 앨범 커버에서 주요 색상 가져오기
   const { data: dominantColor } = useColor(currentTrack?.albumCover, "hex", {
@@ -24,11 +56,26 @@ const PomodoroTimer = () => {
   // 주요 색상이 변경될 때 강조 색상 업데이트
   useEffect(() => {
     if (dominantColor) {
-      setAccentColor(dominantColor);
+      if (isBreak) {
+        setAccentColor(dominantColor);
+      } else {
+        const adjustedColor = adjustBrightness(dominantColor);
+        setAccentColor(adjustedColor);
+      }
     } else if (!currentTrack) {
-      setAccentColor("#121212");
+      setAccentColor("#000");
     }
   }, [dominantColor, currentTrack]);
+
+  // 휴식 시간 시 배경 변경
+  useEffect(() => {
+    if (isBreak) {
+      setAccentColor(dominantColor);
+    } else {
+      const adjustedColor = adjustBrightness(accentColor);
+      setAccentColor(adjustedColor);
+    }
+  }, [isBreak]);
 
   // 타이머 로직
   useEffect(() => {
@@ -83,13 +130,29 @@ const PomodoroTimer = () => {
 
   // 강조 색상에 따라 그라디언트 스타일 업데이트
   useEffect(() => {
-    if (gradientRef.current && backgroundRef.current) {
-      gradientRef.current.style.backgroundImage = `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`;
-      gradientRef.current.style.opacity = 1;
-      setTimeout(() => {
-        backgroundRef.current.style.backgroundImage = `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`;
-        gradientRef.current.style.opacity = 0;
-      }, 500);
+    if (isBreak) {
+      console.log(accentColor);
+      if (gradientRef.current && backgroundRef.current) {
+        gradientRef.current.style.backgroundImage = ``;
+        gradientRef.current.style.backgroundColor = accentColor;
+        gradientRef.current.style.opacity = 1;
+        setTimeout(() => {
+          backgroundRef.current.style.backgroundImage = ``;
+          backgroundRef.current.style.backgroundColor = accentColor;
+          gradientRef.current.style.opacity = 0;
+        }, 500);
+      }
+    } else {
+      if (gradientRef.current && backgroundRef.current) {
+        gradientRef.current.style.backgroundColor = ``;
+        gradientRef.current.style.backgroundImage = `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`;
+        gradientRef.current.style.opacity = 1;
+        setTimeout(() => {
+          backgroundRef.current.style.backgroundColor = ``;
+          backgroundRef.current.style.backgroundImage = `linear-gradient(0deg, ${accentColor} 0%, #000 70%)`;
+          gradientRef.current.style.opacity = 0;
+        }, 500);
+      }
     }
   }, [accentColor]);
 
@@ -132,10 +195,14 @@ const PomodoroTimer = () => {
     const g = parseInt(hexcolor.substr(3, 2), 16);
     const b = parseInt(hexcolor.substr(5, 2), 16);
     const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 128 ? "#000000" : "#ffffff";
+    return yiq >= 128 ? false : true;
   };
 
-  const textColor = "#ffffff"; // 텍스트 색상 결정
+  const textColor = isBreak
+    ? getContrastColor(accentColor)
+      ? "#ffffff"
+      : "#000"
+    : "#ffffff";
 
   // 스타일 객체 정의
   const containerStyle = {
@@ -143,6 +210,7 @@ const PomodoroTimer = () => {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: accentColor,
     height: "100vh",
     color: textColor,
     position: "relative",
@@ -187,7 +255,7 @@ const PomodoroTimer = () => {
 
   const buttonStyle = {
     backgroundColor: textColor,
-    color: "#121212",
+    color: isBreak ? accentColor : "#000",
     border: "none",
     borderRadius: "50%",
     width: "50px",
@@ -202,6 +270,7 @@ const PomodoroTimer = () => {
   const trackInfoStyle = {
     display: "flex",
     alignItems: "center",
+    justifyContent: "center",
     position: "absolute",
     bottom: "50px",
     transition: "opacity 0.5s ease",
@@ -222,6 +291,7 @@ const PomodoroTimer = () => {
     flexDirection: "column",
     alignItems: "flex-start",
     transition: "opacity 0.5s ease",
+    maxWidth: "60vw",
   };
 
   const clockStyle = {
@@ -257,6 +327,14 @@ const PomodoroTimer = () => {
     marginBottom: "12px",
     marginTop: "4px",
     cursor: "pointer",
+    filter: isBreak ? (getContrastColor(accentColor) ? "" : "invert(1)") : "",
+  };
+
+  const ellipsis = {
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    width: "100%",
   };
 
   const [currentTime, setCurrentTime] = useState(""); // 현재 시간 상태
@@ -325,6 +403,7 @@ const PomodoroTimer = () => {
                 </a>
                 <h2
                   style={{
+                    ...ellipsis,
                     fontSize: "1.5rem",
                     marginBottom: "0.5rem",
                     marginTop: "0",
@@ -334,6 +413,7 @@ const PomodoroTimer = () => {
                 </h2>
                 <p
                   style={{
+                    ...ellipsis,
                     fontSize: "1rem",
                     opacity: 0.8,
                     marginTop: "0",
