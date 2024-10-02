@@ -106,28 +106,50 @@ const PomodoroTimer = () => {
     }
   }, [isBreak]);
 
+  const [startTime, setStartTime] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [totalSeconds, setTotalSeconds] = useState(focusTime * 60);
+
   // 타이머 로직
   useEffect(() => {
-    let interval = null;
-    if (isActive) {
-      interval = setInterval(() => {
-        if (seconds > 0) {
-          setSeconds(seconds - 1);
-        } else if (minutes > 0) {
-          setMinutes(minutes - 1);
-          setSeconds(59);
+    let animationFrameId;
+
+    const updateTimer = () => {
+      if (isActive) {
+        const now = Date.now();
+        const newElapsedTime = now - startTime + elapsedTime;
+        const newTotalSeconds = Math.max(0, totalSeconds - Math.floor(newElapsedTime / 1000));
+
+        setMinutes(Math.floor(newTotalSeconds / 60));
+        setSeconds(newTotalSeconds % 60);
+
+        if (newTotalSeconds <= 0) {
+          setIsActive(false);
+          setIsBreak((prevIsBreak) => !prevIsBreak);
+          const newDuration = isBreak ? focusTime : breakTime;
+          setTotalSeconds(newDuration * 60);
+          setElapsedTime(0);
+          setStartTime(null);
         } else {
-          clearInterval(interval);
-          setIsBreak(!isBreak);
-          setMinutes(isBreak ? 25 : 5);
-          setSeconds(0);
+          animationFrameId = requestAnimationFrame(updateTimer);
         }
-      }, 1000);
-    } else if (!isActive && seconds !== 0) {
-      clearInterval(interval);
+      }
+    };
+
+    if (isActive && startTime === null) {
+      setStartTime(Date.now());
     }
-    return () => clearInterval(interval);
-  }, [isActive, minutes, seconds, isBreak]);
+
+    if (isActive) {
+      animationFrameId = requestAnimationFrame(updateTimer);
+    }
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isActive, startTime, elapsedTime, totalSeconds, isBreak, focusTime, breakTime]);
 
   // 현재 트랙 정보 가져오기
   useEffect(() => {
@@ -195,17 +217,25 @@ const PomodoroTimer = () => {
     setIsSettingsOpen(!isSettingsOpen);
   };
 
-  // 타이머 토글 핸들러
   const toggleTimer = () => {
-    setIsActive(!isActive);
+    if (!isActive) {
+      setStartTime(Date.now());
+      setIsActive(true);
+    } else {
+      setElapsedTime((prevElapsedTime) => prevElapsedTime + (Date.now() - startTime));
+      setStartTime(null);
+      setIsActive(false);
+    }
   };
 
-  // 타이머 리셋 핸들러
   const resetTimer = () => {
     setIsActive(false);
-    setMinutes(25);
+    setMinutes(focusTime);
     setSeconds(0);
     setIsBreak(false);
+    setElapsedTime(0);
+    setStartTime(null);
+    setTotalSeconds(focusTime * 60);
   };
 
   // 전체 화면 토글 핸들러
