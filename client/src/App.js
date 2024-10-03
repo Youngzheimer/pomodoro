@@ -32,7 +32,12 @@ const PomodoroTimer = () => {
   useEffect(() => {
     const savedFocusTime = Cookies.get("focusTime");
     const savedBreakTime = Cookies.get("breakTime");
-    if (savedFocusTime) setFocusTime(parseInt(savedFocusTime));
+    if (savedFocusTime) {
+      const focusTimeValue = parseInt(savedFocusTime);
+      setFocusTime(focusTimeValue);
+      setMinutes(focusTimeValue);
+      setSeconds(0);
+    }
     if (savedBreakTime) setBreakTime(parseInt(savedBreakTime));
   }, []);
 
@@ -211,7 +216,7 @@ const PomodoroTimer = () => {
     window.location.href = "/api/login";
   };
 
-  // 설정 버튼 핸들러
+  // 설정 버튼 �
   const toggleSettings = () => {
     setIsSettingsOpen(!isSettingsOpen);
   };
@@ -237,7 +242,7 @@ const PomodoroTimer = () => {
     setTotalSeconds(focusTime * 60);
   };
 
-  // 전체 화면 토글 핸들러
+  // 전체 화면 토글 �
   const toggleFullscreen = () => {
     if (!isFullscreen) {
       if (timerRef.current.requestFullscreen) {
