@@ -77,7 +77,7 @@ const PomodoroTimer = () => {
     return hex;
   }
 
-  // 현재 트랙의 앨범 커버에서 주요 색상 가져오기
+  // 현재 트랙의 �
   const { data: dominantColor } = useColor(currentTrack?.albumCover, "hex", {
     crossOrigin: "anonymous",
   });
@@ -124,12 +124,11 @@ const PomodoroTimer = () => {
         setSeconds(newTotalSeconds % 60);
 
         if (newTotalSeconds <= 0) {
-          setIsActive(false);
           setIsBreak((prevIsBreak) => !prevIsBreak);
           const newDuration = isBreak ? focusTime : breakTime;
           setTotalSeconds(newDuration * 60);
           setElapsedTime(0);
-          setStartTime(null);
+          setStartTime(Date.now());
         } else {
           animationFrameId = requestAnimationFrame(updateTimer);
         }
@@ -207,7 +206,7 @@ const PomodoroTimer = () => {
     }
   }, [accentColor]);
 
-  // 로그인 핸들러
+  // 로그인 �
   const handleLogin = () => {
     window.location.href = "/api/login";
   };
