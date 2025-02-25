@@ -36,6 +36,7 @@ const PomodoroTimer = () => {
       const focusTimeValue = parseInt(savedFocusTime);
       setFocusTime(focusTimeValue);
       setMinutes(focusTimeValue);
+      setTotalSeconds(focusTimeValue * 60); // totalSeconds 업데이트!
       setSeconds(0);
     }
     if (savedBreakTime) setBreakTime(parseInt(savedBreakTime));
@@ -46,6 +47,7 @@ const PomodoroTimer = () => {
     Cookies.set("focusTime", focusTime.toString(), { expires: 365 });
     Cookies.set("breakTime", breakTime.toString(), { expires: 365 });
     setMinutes(focusTime);
+    setTotalSeconds(focusTime * 60); // totalSeconds 업데이트!
     setSeconds(0);
     setIsSettingsOpen(false);
   };
@@ -82,7 +84,7 @@ const PomodoroTimer = () => {
     return hex;
   }
 
-  // 현재 트랙의 �
+  // 현재 트랙의 앨범 커버 색상 추출
   const { data: dominantColor } = useColor(currentTrack?.albumCover, "hex", {
     crossOrigin: "anonymous",
   });
@@ -211,12 +213,12 @@ const PomodoroTimer = () => {
     }
   }, [accentColor]);
 
-  // 로그인 �
+  // 로그인 핸들러
   const handleLogin = () => {
     window.location.href = "/api/login";
   };
 
-  // 설정 버튼 �
+  // 설정 버튼 핸들러
   const toggleSettings = () => {
     setIsSettingsOpen(!isSettingsOpen);
   };
@@ -242,7 +244,7 @@ const PomodoroTimer = () => {
     setTotalSeconds(focusTime * 60);
   };
 
-  // 전체 화면 토글 �
+  // 전체 화면 토글 핸들러
   const toggleFullscreen = () => {
     if (!isFullscreen) {
       if (timerRef.current.requestFullscreen) {
