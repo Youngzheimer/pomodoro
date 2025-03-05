@@ -161,12 +161,16 @@ const PomodoroTimer = () => {
   useEffect(() => {
     const fetchCurrentTrack = async () => {
       try {
-        const response = await fetch("/api/current-track", {
+        var response = await fetch("/api/current-track", {
           credentials: "include",
         });
         if (response.status === 401) {
           setIsAuthenticated(false);
           return;
+        } else if (response.status === 278) {
+          response = await fetch("/api/current-track", {
+            credentials: "include",
+          });
         }
         const data = await response.json();
         if (data.isPlaying) {

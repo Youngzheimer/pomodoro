@@ -146,7 +146,7 @@ app.get("/api/current-track", async (req, res) => {
         );
         req.session.accessToken = newAccessToken;
         return res
-          .status(401)
+          .status(278)
           .json({ error: "Token refreshed, please try again" });
       } catch (refreshError) {
         return res.status(401).json({ error: "Authentication failed" });
