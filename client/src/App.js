@@ -511,6 +511,40 @@ const PomodoroTimer = () => {
         </button>
       ) : (
         <>
+        <div style={overlayStyle}>
+                <div style={modalStyle}>
+                  <button
+                    onClick={() => setIsSettingsOpen(false)}
+                    style={closeButtonStyle}
+                  >
+                    <X size={24} />
+                  </button>
+                  <h2 style={{ marginBottom: "1.5rem", fontSize: "1.5rem" }}>
+                    Settings
+                  </h2>
+                  <div style={inputContainerStyle}>
+                    <label style={labelStyle}>Focus Time (minutes):</label>
+                    <input
+                      type="number"
+                      value={focusTime}
+                      onChange={(e) => setFocusTime(parseInt(e.target.value))}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div style={inputContainerStyle}>
+                    <label style={labelStyle}>Break Time (minutes):</label>
+                    <input
+                      type="number"
+                      value={breakTime}
+                      onChange={(e) => setBreakTime(parseInt(e.target.value))}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <button onClick={saveSettings} style={saveButtonStyle}>
+                    Save Settings
+                  </button>
+                </div>
+              </div>
           <div style={clockStyle}>{currentTime}</div>
           <div style={timerStyle}>
             {String(minutes).padStart(2, "0")}:
@@ -569,40 +603,6 @@ const PomodoroTimer = () => {
                 >
                   {currentTrack.artist}
                 </p>
-              </div>
-              <div style={overlayStyle}>
-                <div style={modalStyle}>
-                  <button
-                    onClick={() => setIsSettingsOpen(false)}
-                    style={closeButtonStyle}
-                  >
-                    <X size={24} />
-                  </button>
-                  <h2 style={{ marginBottom: "1.5rem", fontSize: "1.5rem" }}>
-                    Settings
-                  </h2>
-                  <div style={inputContainerStyle}>
-                    <label style={labelStyle}>Focus Time (minutes):</label>
-                    <input
-                      type="number"
-                      value={focusTime}
-                      onChange={(e) => setFocusTime(parseInt(e.target.value))}
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div style={inputContainerStyle}>
-                    <label style={labelStyle}>Break Time (minutes):</label>
-                    <input
-                      type="number"
-                      value={breakTime}
-                      onChange={(e) => setBreakTime(parseInt(e.target.value))}
-                      style={inputStyle}
-                    />
-                  </div>
-                  <button onClick={saveSettings} style={saveButtonStyle}>
-                    Save Settings
-                  </button>
-                </div>
               </div>
             </div>
           )}
